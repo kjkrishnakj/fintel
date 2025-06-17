@@ -1,3 +1,4 @@
+import Link from "next/link"
 import {
   IconCreditCard,
   IconDotsVertical,
@@ -86,10 +87,14 @@ export function NavUser({
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <IconCreditCard />
-                Billing
-              </DropdownMenuItem>
+              <Link href="/login" passHref legacyBehavior>
+                <DropdownMenuItem asChild>
+                  <a>
+                    <IconCreditCard />
+                    Login
+                  </a>
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem>
                 <IconNotification />
                 Notifications
