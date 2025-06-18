@@ -4,25 +4,31 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const apiKey = "3970e60cc361481785edea02bdebee8b"
-  const url = `https://newsapi.org/v2/everything?q=stocks OR stock market OR shares&language=en&sortBy=publishedAt&sources=cnn,bloomberg,business-insider,financial-times,cnbc&apiKey=${apiKey}`
+  const apiKey = process.env.FINNHUB_API_KEY
+  const url = `https://finnhub.io/api/v1/news?category=general&token=${apiKey}`
 
   try {
     const response = await fetch(url)
 
     if (!response.ok) {
-      const text = await response.text()
-      return res.status(response.status).json({ error: "NewsAPI error", details: text })
+      return res.status(response.status).end()
     }
 
     const data = await response.json()
 
-    if (!data.articles) {
-      return res.status(500).json({ error: "No articles found" })
+    if (!Array.isArray(data)) {
+      return res.status(204).end()
     }
 
-    return res.status(200).json(data.articles)
-  } catch (error: any) {
-    return res.status(500).json({ error: "Failed to fetch news", message: error.message })
+    const articles = data
+      .filter((a) => a.headline && a.url)
+      .map((a) => ({
+        title: a.headline,
+        url: a.url,
+      }))
+
+    return res.status(200).json(articles)
+  } catch {
+    return res.status(500).end()
   }
 }
