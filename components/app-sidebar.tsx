@@ -30,7 +30,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-
 const data = {
   user: {
     name: "Krishna Jaiswal",
@@ -39,27 +38,27 @@ const data = {
   },
   navMain: [
     {
-      title: "Market Overview",
+      title: "Dashboard",
       url: "#",
       icon: IconDashboard,
     },
     {
-      title: "Predictions",
+      title: "Technical Indicators",
       url: "#",
       icon: IconChartBar,
     },
     {
-      title: "Portfolio",
+      title: "Comparative Analysis",
       url: "#",
       icon: IconFolder,
     },
     {
-      title: "Watchlist",
+      title: "Watchlist & Alerts",
       url: "#",
       icon: IconListDetails,
     },
     {
-      title: "Team",
+      title: "Team Access",
       url: "#",
       icon: IconUsers,
     },
@@ -72,7 +71,7 @@ const data = {
       url: "#",
       items: [
         {
-          title: "Daily Report",
+          title: "Daily Market Report",
           url: "#",
         },
         {
@@ -82,7 +81,7 @@ const data = {
       ],
     },
     {
-      title: "Insights",
+      title: "Insights & Events",
       icon: IconFileDescription,
       url: "#",
       items: [
@@ -91,22 +90,22 @@ const data = {
           url: "#",
         },
         {
-          title: "Archived Insights",
+          title: "Earnings & News",
           url: "#",
         },
       ],
     },
     {
-      title: "Models",
+      title: "Prediction Models",
       icon: IconFileAi,
       url: "#",
       items: [
         {
-          title: "Active Models",
+          title: "Active Forecasts",
           url: "#",
         },
         {
-          title: "Archived Models",
+          title: "Model Archive",
           url: "#",
         },
       ],
@@ -119,7 +118,7 @@ const data = {
       icon: IconSettings,
     },
     {
-      title: "Support",
+      title: "Help & Support",
       url: "#",
       icon: IconHelp,
     },
@@ -131,12 +130,12 @@ const data = {
   ],
   documents: [
     {
-      name: "Data Feeds",
+      name: "Live Data Feeds",
       url: "#",
       icon: IconDatabase,
     },
     {
-      name: "Financial Reports",
+      name: "Financial Statements",
       url: "#",
       icon: IconReport,
     },
