@@ -3,8 +3,8 @@ import {
   IconCreditCard,
   IconDotsVertical,
   IconLogout,
-  IconNotification,
   IconUserCircle,
+  IconUserPlus,
 } from "@tabler/icons-react"
 
 import {
@@ -95,10 +95,14 @@ export function NavUser({
                   </a>
                 </DropdownMenuItem>
               </Link>
-              <DropdownMenuItem>
-                <IconNotification />
-                Notifications
-              </DropdownMenuItem>
+              <Link href="/signup" passHref legacyBehavior>
+                <DropdownMenuItem asChild>
+                  <a>
+                    <IconUserPlus />
+                    Signup
+                  </a>
+                </DropdownMenuItem>
+              </Link>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem>

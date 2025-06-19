@@ -7,36 +7,35 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useRouter } from "next/navigation"
 
-export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
+export function SignupForm({ className, ...props }: React.ComponentProps<"div">) {
+  const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState<false | "logging-in" | "redirecting">(false)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading("logging-in")
+    setLoading(true)
     setError("")
 
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch("/api/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ name, email, password }),
       })
 
       const data = await res.json()
       if (data.success) {
-        localStorage.setItem("token", data.token)
-        setLoading("redirecting")
-        router.push("/dashboard")
+        router.push("/login")
       } else {
-        setError(data.error || "Login failed")
-        setLoading(false)
+        setError(data.error || "Signup failed")
       }
     } catch (err) {
       setError("Something went wrong")
+    } finally {
       setLoading(false)
     }
   }
@@ -45,11 +44,22 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
     <div className={`flex flex-col gap-6 ${className}`} {...props}>
       <Card className="overflow-hidden p-0">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form onSubmit={handleLogin} className="p-6 md:p-8">
+          <form onSubmit={handleSignup} className="p-6 md:p-8">
             <div className="flex flex-col gap-6">
               <div className="flex flex-col items-center text-center">
-                <h1 className="text-2xl font-bold">Welcome back</h1>
-                <p className="text-muted-foreground">Login to your Fintel account</p>
+                <h1 className="text-2xl font-bold">Create an account</h1>
+                <p className="text-muted-foreground">Sign up to get started</p>
+              </div>
+              <div className="grid gap-3">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="John Doe"
+                  required
+                />
               </div>
               <div className="grid gap-3">
                 <Label htmlFor="email">Email</Label>
@@ -73,12 +83,8 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
                 />
               </div>
               {error && <p className="text-red-500 text-sm">{error}</p>}
-              <Button type="submit" className="w-full" disabled={!!loading}>
-                {loading === "redirecting"
-                  ? "Redirecting..."
-                  : loading === "logging-in"
-                  ? "Logging in..."
-                  : "Login"}
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Signing up..." : "Sign Up"}
               </Button>
             </div>
           </form>
