@@ -54,6 +54,34 @@ type ChartPoint = {
   open: number
 }
 
+function getBestBuySellDays(data: ChartPoint[]) {
+  if (data.length === 0) return null
+
+  let minPrice = data[0].close
+  let minDate = data[0].date
+  let maxProfit = 0
+  let buyDate = data[0].date
+  let sellDate = data[0].date
+
+  for (let i = 1; i < data.length; i++) {
+    const price = data[i].close
+    const date = data[i].date
+
+    if (price - minPrice > maxProfit) {
+      maxProfit = price - minPrice
+      buyDate = minDate
+      sellDate = date
+    }
+
+    if (price < minPrice) {
+      minPrice = price
+      minDate = date
+    }
+  }
+
+  return { buyDate, sellDate, maxProfit }
+}
+
 export function ChartAreaInteractive({ title, source }: Props) {
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = React.useState("1y")
@@ -89,15 +117,25 @@ export function ChartAreaInteractive({ title, source }: Props) {
     return date >= startDate
   })
 
+  const best = getBestBuySellDays(filteredData)
+
   return (
     <Card className="@container/card">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
-          <span className="hidden @[540px]/card:block">
+          <div className="hidden @[540px]/card:block">
             View Open and Close price trends for {title}
-          </span>
-          <span className="@[540px]/card:hidden">Open vs Close pricing</span>
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">
+            {best ? (
+              <>
+                Best Buy: <b>{best.buyDate}</b> | Best Sell: <b>{best.sellDate}</b> | Max Profit: <b>₹{best.maxProfit.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</b>
+              </>
+            ) : (
+              "Calculating best time to trade..."
+            )}
+          </div>
         </CardDescription>
         <CardAction>
           <ToggleGroup
@@ -146,35 +184,33 @@ export function ChartAreaInteractive({ title, source }: Props) {
                   })
                 }}
               />
-              
-<YAxis
-  domain={([min, max]) => {
-    const padding = (max - min) * 0.1 // 10% top/bottom padding
-    return [min - padding, max + padding]
-  }}
-  tickFormatter={(value) =>
-    `₹${value.toLocaleString("en-IN")}`
-  }
-  tickLine={false}
-  axisLine={false}
-/>
+              <YAxis
+                domain={([min, max]) => {
+                  const padding = (max - min) * 0.1
+                  return [min - padding, max + padding]
+                }}
+                tickFormatter={(value) =>
+                  `₹${value.toLocaleString("en-IN")}`
+                }
+                tickLine={false}
+                axisLine={false}
+              />
               <Legend verticalAlign="top" iconType="circle" />
               <ChartTooltip
-  cursor={{ strokeDasharray: "3 3" }}
-  content={
-    <ChartTooltipContent
-      labelFormatter={(value) =>
-        new Date(value).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-      }
-      indicator="dot"
-    />
-  }
-/>
-
+                cursor={{ strokeDasharray: "3 3" }}
+                content={
+                  <ChartTooltipContent
+                    labelFormatter={(value) =>
+                      new Date(value).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    }
+                    indicator="dot"
+                  />
+                }
+              />
               <Line
                 dataKey="open"
                 type="monotone"
