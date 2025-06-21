@@ -1,7 +1,15 @@
 "use client"
 
 import * as React from "react"
-import { Area, AreaChart, CartesianGrid, XAxis } from "recharts"
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Legend,
+} from "recharts"
 import { csvParse } from "d3-dsv"
 import {
   Card,
@@ -31,13 +39,13 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile"
 
 const chartConfig: ChartConfig = {
-  close: { label: "Close Price", color: "var(--primary)" },
-  open: { label: "Open Price", color: "var(--primary)" },
+  close: { label: "Close Price", color: "#ef4444" },
+  open: { label: "Open Price", color: "#22c55e" },
 }
 
 type Props = {
   title: string
-  source: string // e.g., "nasdaq", "snp"
+  source: string
 }
 
 type ChartPoint = {
@@ -119,66 +127,63 @@ export function ChartAreaInteractive({ title, source }: Props) {
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
+          className="aspect-auto h-[300px] w-full"
         >
-          <AreaChart data={filteredData}>
-            <defs>
-              <linearGradient id="fillClose" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#40E0D0" stopOpacity={1.0} />
-                <stop offset="95%" stopColor="#40E0D0" stopOpacity={0.1} />
-              </linearGradient>
-              <linearGradient id="fillOpen" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#40E0D0" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#40E0D0" stopOpacity={0.1} />
-              </linearGradient>
-            </defs>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={filteredData}>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <XAxis
+                dataKey="date"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+                tickFormatter={(value) => {
+                  const date = new Date(value)
+                  return date.toLocaleDateString("en-US", {
+                    month: "short",
+                    year: "2-digit",
+                  })
+                }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => `₹${value.toLocaleString()}`}
+              />
+              <Legend verticalAlign="top" iconType="circle" />
+              <ChartTooltip
+  cursor={{ strokeDasharray: "3 3" }}
+  content={
+    <ChartTooltipContent
+      labelFormatter={(value) =>
+        new Date(value).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      }
+      indicator="dot"
+    />
+  }
+/>
 
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="date"
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-              tickFormatter={(value) => {
-                const date = new Date(value)
-                return date.toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "2-digit",
-                })
-              }}
-            />
-            <ChartTooltip
-              cursor={false}
-              defaultIndex={isMobile ? -1 : 10}
-              content={
-                <ChartTooltipContent
-                  labelFormatter={(value) =>
-                    new Date(value).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })
-                  }
-                  indicator="dot"
-                />
-              }
-            />
-            <Area
-              dataKey="open"
-              type="natural"
-              fill="url(#fillOpen)"
-              stroke="#40E0D0"
-              stackId="a"
-            />
-            <Area
-              dataKey="close"
-              type="natural"
-              fill="url(#fillClose)"
-              stroke="#40E0D0"
-              stackId="a"
-            />
-          </AreaChart>
+              <Line
+                dataKey="open"
+                type="monotone"
+                stroke="#15803d"
+                dot={false}
+                strokeWidth={2.5}
+              />
+              <Line
+                dataKey="close"
+                type="monotone"
+                stroke="#b91c1c"
+                dot={false}
+                strokeWidth={2.5}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
     </Card>
