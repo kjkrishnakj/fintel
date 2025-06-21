@@ -1,4 +1,3 @@
-// components/ChartAreaInteractive.tsx
 "use client"
 
 import * as React from "react"
@@ -31,7 +30,7 @@ import {
 } from "@/components/ui/toggle-group"
 import { useIsMobile } from "@/hooks/use-mobile"
 
-const chartConfig = {
+const chartConfig: ChartConfig = {
   close: { label: "Close Price", color: "var(--primary)" },
   open: { label: "Open Price", color: "var(--primary)" },
 }
@@ -41,10 +40,21 @@ type Props = {
   source: string // e.g., "nasdaq", "snp"
 }
 
+type ChartPoint = {
+  date: string
+  close: number
+  open: number
+}
+
 export function ChartAreaInteractive({ title, source }: Props) {
   const isMobile = useIsMobile()
   const [timeRange, setTimeRange] = React.useState("1y")
-  const [chartData, setChartData] = React.useState([])
+  const [chartData, setChartData] = React.useState<ChartPoint[]>([])
+
+  const formatDate = (input: string) => {
+    const [month, day, year] = input.split("/")
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
+  }
 
   React.useEffect(() => {
     fetch(`/data/${source}.csv`)
@@ -61,11 +71,6 @@ export function ChartAreaInteractive({ title, source }: Props) {
         setChartData(cleaned.reverse())
       })
   }, [source])
-
-  const formatDate = (input: string) => {
-    const [month, day, year] = input.split("/")
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
-  }
 
   const filteredData = chartData.filter((item) => {
     const date = new Date(item.date)
