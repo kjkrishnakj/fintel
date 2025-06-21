@@ -146,11 +146,18 @@ export function ChartAreaInteractive({ title, source }: Props) {
                   })
                 }}
               />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `₹${value.toLocaleString()}`}
-              />
+              
+<YAxis
+  domain={([min, max]) => {
+    const padding = (max - min) * 0.1 // 10% top/bottom padding
+    return [min - padding, max + padding]
+  }}
+  tickFormatter={(value) =>
+    `₹${value.toLocaleString("en-IN")}`
+  }
+  tickLine={false}
+  axisLine={false}
+/>
               <Legend verticalAlign="top" iconType="circle" />
               <ChartTooltip
   cursor={{ strokeDasharray: "3 3" }}
