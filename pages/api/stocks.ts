@@ -1,9 +1,13 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 
 const symbols = [
-    "AAPL", "TSLA", "MSFT", "GOOGL", 
-    "AMZN", "META", "NVDA", "INTC", 
-    "IBM", "NFLX", "BA", "DIS"
+    "AAPL", "MSFT", "GOOGL", "AMZN", "META", "NVDA",
+  // S&P 500
+  "TSLA", "BRK.B", "JPM", "JNJ", "V", "UNH",
+  // Dow Jones
+  "INTC", "IBM", "DIS", "BA", "WMT", "KO",
+  // Russell 2000
+  "PLUG", "BLNK", "FUV", "RRGB", "TNDM", "HROW"
   ]
 const API_KEY = process.env.FINNHUB_API_KEY
 

@@ -26,9 +26,9 @@ export default function Page() {
               <SectionCards />
               <div className="px-4 lg:px-6 space-y-6">
               <ChartAreaInteractive title="NASDAQ Forecast" index="nasdaq" />
-              {/* <ChartAreaInteractive title="SNP Forecast" index="snp" days={30} /> */}
-              {/* <ChartAreaInteractive title="Russel Forecast" index="russell" days={30} />
-              <ChartAreaInteractive title="NASDAQ Forecast" index="dow" days={30} /> */}
+              <ChartAreaInteractive title="SNP Forecast" index="snp" />
+              <ChartAreaInteractive title="Russel Forecast" index="russell" />
+              <ChartAreaInteractive title="Dow Jones Forecast" index="dow"  /> 
 
               </div>
             </div>

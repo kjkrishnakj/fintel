@@ -7,8 +7,8 @@ def load_and_forecast(index: str = "nasdaq", days: int = 30):
     file_map = {
         "nasdaq": "data/nasdaq.csv",
         "snp": "data/snp.csv",
-        "dow": "data/dow.csv",
-        "russell": "data/russell.csv"
+        "dow": "data/downjones.csv",
+        "russell": "data/rut.csv"
     }
 
     if index not in file_map:

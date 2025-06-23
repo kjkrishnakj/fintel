@@ -1,5 +1,7 @@
-import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
+"use client"
 
+import * as React from "react"
+import { IconTrendingDown, IconTrendingUp } from "@tabler/icons-react"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -10,101 +12,197 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
+function getStandardDeviation(numbers: number[]) {
+  const mean = numbers.reduce((a, b) => a + b, 0) / numbers.length
+  const variance = numbers.reduce((a, b) => a + (b - mean) ** 2, 0) / numbers.length
+  return Math.sqrt(variance)
+}
+
 export function SectionCards() {
+  const [forecast, setForecast] = React.useState<{ ds: string; yhat: number }[]>([])
+  const [previousPrice, setPreviousPrice] = React.useState<number | null>(null)
+  const [index, setIndex] = React.useState(0)
+  const [animating, setAnimating] = React.useState(false)
+
+  const indexLabels = ["NASDAQ", "S&P 500", "Dow Jones", "Russell"]
+
+  React.useEffect(() => {
+    fetch("http://localhost:8000/predict?index=nasdaq&days=365")
+      .then((res) => res.json())
+      .then((json) => setForecast(json.forecast))
+      .catch((err) => console.error("Forecast fetch error:", err))
+
+    fetch("/data/nasdaq.csv")
+      .then((res) => res.text())
+      .then((text) => {
+        const rows = text.trim().split("\n")
+        const last = rows[1]?.split(",")
+        if (last) {
+          const close = parseFloat(last[1]?.replace(/[^0-9.]/g, "") || "0")
+          setPreviousPrice(close)
+        }
+      })
+      .catch((err) => console.error("Previous price fetch error:", err))
+  }, [])
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setAnimating(true)
+      setTimeout(() => {
+        setIndex((prev) => (prev + 1) % Math.min(forecast.length, 10))
+        setAnimating(false)
+      }, 600)
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [forecast])
+
+  const current = forecast[index]
+  const previous = forecast[index + 1] ?? current
+
+  const percentChange =
+    current && previous
+      ? (((current.yhat - previous.yhat) / previous.yhat) * 100).toFixed(1)
+      : null
+
+  const trendingUp = percentChange && parseFloat(percentChange) > 0
+
+  const values = forecast.map((f) => f.yhat)
+  const std = getStandardDeviation(values)
+  const avg = values.reduce((a, b) => a + b, 0) / values.length
+  const vix = ((std / avg) * 100).toFixed(1)
+  const volatilityLabel =
+    parseFloat(vix) < 2 ? "Stable" : parseFloat(vix) < 4 ? "Mild fluctuation" : "High fluctuation"
+
+  const newsSentiment = React.useMemo(() => {
+    if (forecast.length < 30) return null
+    const past = forecast[29].yhat
+    const now = forecast[0].yhat
+    const change = ((now - past) / past) * 100
+    return {
+      value: change.toFixed(1),
+      label: change > 5 ? "Positive" : change < -5 ? "Negative" : "Neutral",
+      bullish: change > 5,
+    }
+  }, [forecast])
+
   return (
-    <div className="*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 px-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs lg:px-6 @xl/main:grid-cols-2 @5xl/main:grid-cols-4">
-      
+    <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 xl:grid-cols-4">
       {/* Predicted Price */}
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Predicted Price</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            ₹2,450.75
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +2.3%
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Trending up <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">
-            Projected closing for next trading day
-          </div>
-        </CardFooter>
-      </Card>
+        <CardDescription>
+  Predicted Price – <span className="font-semibold text-primary dark:text-primary">
+    {indexLabels[index % indexLabels.length]}
+  </span>
+</CardDescription>
 
-      {/* News Sentiment */}
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>News Sentiment</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            Positive
+            <span className={animating ? "slide-up-fade-out" : "slide-up-fade-in"}>
+              {current ? `₹${current.yhat.toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "Loading..."}
+            </span>
           </CardTitle>
           <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +12.5%
-            </Badge>
+            {percentChange && (
+              <span className={animating ? "slide-up-fade-out" : "slide-up-fade-in"}>
+                <Badge variant="outline">
+                  {trendingUp ? <IconTrendingUp /> : <IconTrendingDown />}
+                  {trendingUp ? "+" : ""}
+                  {percentChange}%
+                </Badge>
+              </span>
+            )}
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Bullish outlook <IconTrendingUp className="size-4" />
+          <div className="flex gap-2 font-medium">
+            <span className={animating ? "slide-up-fade-out" : "slide-up-fade-in"}>
+              {trendingUp ? "Trending up" : "Trending down"}
+            </span>
+            {trendingUp ? <IconTrendingUp className="size-4" /> : <IconTrendingDown className="size-4" />}
           </div>
-          <div className="text-muted-foreground">
-            Real-time news analysis
-          </div>
-        </CardFooter>
-      </Card>
-
-      {/* Active Stocks Monitored */}
-      <Card className="@container/card">
-        <CardHeader>
-          <CardDescription>Stocks Monitored</CardDescription>
-          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            27
-          </CardTitle>
-          <CardAction>
-            <Badge variant="outline">
-              <IconTrendingUp />
-              +5 this week
-            </Badge>
-          </CardAction>
-        </CardHeader>
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Personalized watchlist <IconTrendingUp className="size-4" />
-          </div>
-          <div className="text-muted-foreground">Updated with preferences</div>
+          <div className="text-muted-foreground">Forecast point {index + 1}</div>
         </CardFooter>
       </Card>
 
       {/* Volatility Index */}
       <Card className="@container/card">
         <CardHeader>
-          <CardDescription>Volatility Index</CardDescription>
+        <CardDescription>
+  Volatility Index – <span className="font-semibold text-primary dark:text-primary">
+    {indexLabels[index % indexLabels.length]}
+  </span>
+</CardDescription>
+
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            3.7%
+            <span className={animating ? "slide-up-fade-out" : "slide-up-fade-in"}>{vix}%</span>
+          </CardTitle>
+          <CardAction>
+            <span className={animating ? "slide-up-fade-out" : "slide-up-fade-in"}>
+              <Badge variant="outline">
+                {parseFloat(vix) > 3.5 ? <IconTrendingDown /> : <IconTrendingUp />}
+                {vix}%
+              </Badge>
+            </span>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="flex gap-2 font-medium">
+            <span className={animating ? "slide-up-fade-out" : "slide-up-fade-in"}>
+              {volatilityLabel}
+            </span>
+            {parseFloat(vix) > 3.5 ? <IconTrendingDown className="size-4" /> : <IconTrendingUp className="size-4" />}
+          </div>
+          <div className="text-muted-foreground">From standard deviation of forecast</div>
+        </CardFooter>
+      </Card>
+
+      {/* News Sentiment (Static) */}
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>News Sentiment</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            {newsSentiment?.label || "Loading..."}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              <IconTrendingDown />
-              −0.8%
+              {newsSentiment?.bullish ? <IconTrendingUp /> : <IconTrendingDown />}
+              {newsSentiment ? `${newsSentiment.value}%` : ""}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
-          <div className="line-clamp-1 flex gap-2 font-medium">
-            Mild fluctuation <IconTrendingDown className="size-4" />
+          <div className="flex gap-2 font-medium">
+            {newsSentiment?.bullish ? "Bullish outlook" : "Flat/Weak outlook"}
+            {newsSentiment?.bullish ? (
+              <IconTrendingUp className="size-4" />
+            ) : (
+              <IconTrendingDown className="size-4" />
+            )}
           </div>
-          <div className="text-muted-foreground">
-            Last 5 sessions average
+          <div className="text-muted-foreground">Based on recent forecast trend</div>
+        </CardFooter>
+      </Card>
+
+      {/* Stocks Monitored (Static) */}
+      <Card className="@container/card">
+        <CardHeader>
+          <CardDescription>Stocks Monitored</CardDescription>
+          <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+            {forecast.length || "0"}
+          </CardTitle>
+          <CardAction>
+            <Badge variant="outline">
+              <IconTrendingUp />
+              +{Math.floor(forecast.length / 20)} this week
+            </Badge>
+          </CardAction>
+        </CardHeader>
+        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+          <div className="flex gap-2 font-medium">
+            Personalized watchlist <IconTrendingUp className="size-4" />
           </div>
+          <div className="text-muted-foreground">Based on forecast dataset</div>
         </CardFooter>
       </Card>
     </div>

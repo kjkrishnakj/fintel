@@ -164,6 +164,37 @@ body {
   animation: slideFade 2.5s ease-in-out forwards;
 }
 
+@keyframes slideUpFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0%);
+  }
+}
+
+@keyframes slideUpFadeOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+.slide-up-fade-in {
+  animation: slideUpFadeIn 0.6s ease forwards;
+}
+
+.slide-up-fade-out {
+  animation: slideUpFadeOut 0.6s ease forwards;
+}
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
