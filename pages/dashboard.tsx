@@ -25,10 +25,11 @@ export default function Page() {
             <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
               <SectionCards />
               <div className="px-4 lg:px-6 space-y-6">
-                <ChartAreaInteractive title="NASDAQ" source="nasdaq" />
-                <ChartAreaInteractive title="S&P 500" source="snp" />
-                <ChartAreaInteractive title="Dow Jones" source="downjones" />
-                <ChartAreaInteractive title="Russell 2000" source="rut" />
+              <ChartAreaInteractive title="NASDAQ Forecast" index="nasdaq" />
+              {/* <ChartAreaInteractive title="SNP Forecast" index="snp" days={30} /> */}
+              {/* <ChartAreaInteractive title="Russel Forecast" index="russell" days={30} />
+              <ChartAreaInteractive title="NASDAQ Forecast" index="dow" days={30} /> */}
+
               </div>
             </div>
           </div>

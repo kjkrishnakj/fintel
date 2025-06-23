@@ -2,29 +2,25 @@
 
 import * as React from "react"
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   CartesianGrid,
   XAxis,
   YAxis,
   ResponsiveContainer,
-  Legend,
+  Tooltip,
 } from "recharts"
-import { csvParse } from "d3-dsv"
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
 import {
-  ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart"
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group"
 import {
   Select,
   SelectContent,
@@ -32,125 +28,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group"
-import { useIsMobile } from "@/hooks/use-mobile"
 
-const chartConfig: ChartConfig = {
-  close: { label: "Close Price", color: "#ef4444" },
-  open: { label: "Open Price", color: "#22c55e" },
+type ForecastPoint = {
+  ds: string
+  yhat: number
 }
 
 type Props = {
   title: string
-  source: string
+  index: string
 }
 
-type ChartPoint = {
-  date: string
-  close: number
-  open: number
+const rangeToDays: Record<"1y" | "2y" | "5y", number> = {
+  "1y": 365,
+  "2y": 730,
+  "5y": 1825,
 }
 
-function getBestBuySellDays(data: ChartPoint[]) {
-  if (data.length === 0) return null
-
-  let minPrice = data[0].close
-  let minDate = data[0].date
-  let maxProfit = 0
-  let buyDate = data[0].date
-  let sellDate = data[0].date
-
-  for (let i = 1; i < data.length; i++) {
-    const price = data[i].close
-    const date = data[i].date
-
-    if (price - minPrice > maxProfit) {
-      maxProfit = price - minPrice
-      buyDate = minDate
-      sellDate = date
-    }
-
-    if (price < minPrice) {
-      minPrice = price
-      minDate = date
-    }
-  }
-
-  return { buyDate, sellDate, maxProfit }
-}
-
-export function ChartAreaInteractive({ title, source }: Props) {
-  const isMobile = useIsMobile()
-  const [timeRange, setTimeRange] = React.useState("1y")
-  const [chartData, setChartData] = React.useState<ChartPoint[]>([])
-
-  const formatDate = (input: string) => {
-    const [month, day, year] = input.split("/")
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
-  }
+export function ChartAreaInteractive({ title, index }: Props) {
+  const [data, setData] = React.useState<ForecastPoint[]>([])
+  const [range, setRange] = React.useState<"1y" | "2y" | "5y">("1y")
 
   React.useEffect(() => {
-    fetch(`/data/${source}.csv`)
-      .then((res) => res.text())
-      .then((text) => {
-        const parsed = csvParse(text)
-        const cleaned = parsed
-          .filter((row) => row.Date && row["Close/Last"])
-          .map((row) => ({
-            date: formatDate(row.Date),
-            close: parseFloat(row["Close/Last"]?.replace(/[^0-9.]/g, "") || "0"),
-            open: parseFloat(row["Open"]?.replace(/[^0-9.]/g, "") || "0"),
-          }))
-        setChartData(cleaned.reverse())
-      })
-  }, [source])
-
-  const filteredData = chartData.filter((item) => {
-    const date = new Date(item.date)
-    const today = new Date()
-    const years = { "1y": 1, "2y": 2, "5y": 5 }[timeRange] || 1
-    const startDate = new Date(today)
-    startDate.setFullYear(today.getFullYear() - years)
-    return date >= startDate
-  })
-
-  const best = getBestBuySellDays(filteredData)
+    const days = rangeToDays[range]
+    fetch(`http://localhost:8000/predict?index=${index}&days=${days}`)
+      .then((res) => res.json())
+      .then((json) => setData(json.forecast))
+      .catch((err) => console.error("API Error:", err))
+  }, [index, range])
 
   return (
     <Card className="@container/card">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
-          <div className="hidden @[540px]/card:block">
-            View Open and Close price trends for {title}
-          </div>
-          <div className="text-sm text-muted-foreground mt-1">
-            {best ? (
-              <>
-                Best Buy: <b>{best.buyDate}</b> | Best Sell: <b>{best.sellDate}</b> | Max Profit: <b>₹{best.maxProfit.toLocaleString("en-IN", { maximumFractionDigits: 2 })}</b>
-              </>
-            ) : (
-              "Calculating best time to trade..."
-            )}
-          </div>
+          Forecasted closing prices — {range.toUpperCase()} view
         </CardDescription>
-        <CardAction>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-3 gap-3">
           <ToggleGroup
             type="single"
-            value={timeRange}
-            onValueChange={setTimeRange}
+            value={range}
+            onValueChange={(value) => setRange(value as "1y" | "2y" | "5y")}
             variant="outline"
-            className="hidden *:data-[slot=toggle-group-item]:!px-4 @[767px]/card:flex"
+            className="hidden sm:flex"
           >
             <ToggleGroupItem value="1y">1 Year</ToggleGroupItem>
             <ToggleGroupItem value="2y">2 Years</ToggleGroupItem>
             <ToggleGroupItem value="5y">5 Years</ToggleGroupItem>
           </ToggleGroup>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-40 @[767px]/card:hidden" size="sm">
+
+          <Select value={range} onValueChange={(value) => setRange(value as "1y" | "2y" | "5y")}>
+            <SelectTrigger className="w-[150px] sm:hidden">
               <SelectValue placeholder="1 Year" />
             </SelectTrigger>
             <SelectContent className="rounded-xl">
@@ -159,75 +87,65 @@ export function ChartAreaInteractive({ title, source }: Props) {
               <SelectItem value="5y">5 Years</SelectItem>
             </SelectContent>
           </Select>
-        </CardAction>
+        </div>
       </CardHeader>
 
-      <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
-        <ChartContainer
-          config={chartConfig}
-          className="aspect-auto h-[300px] w-full"
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={filteredData}>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={32}
-                tickFormatter={(value) => {
-                  const date = new Date(value)
-                  return date.toLocaleDateString("en-US", {
-                    month: "short",
-                    year: "2-digit",
-                  })
-                }}
-              />
-              <YAxis
-                domain={([min, max]) => {
-                  const padding = (max - min) * 0.1
-                  return [min - padding, max + padding]
-                }}
-                tickFormatter={(value) =>
-                  `₹${value.toLocaleString("en-IN")}`
-                }
-                tickLine={false}
-                axisLine={false}
-              />
-              <Legend verticalAlign="top" iconType="circle" />
-              <ChartTooltip
-                cursor={{ strokeDasharray: "3 3" }}
-                content={
-                  <ChartTooltipContent
-                    labelFormatter={(value) =>
-                      new Date(value).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    }
-                    indicator="dot"
-                  />
-                }
-              />
-              <Line
-                dataKey="open"
-                type="monotone"
-                stroke="#15803d"
-                dot={false}
-                strokeWidth={2.5}
-              />
-              <Line
-                dataKey="close"
-                type="monotone"
-                stroke="#b91c1c"
-                dot={false}
-                strokeWidth={2.5}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartContainer>
+      <CardContent className="px-2 pt-2 sm:px-6 sm:pt-4">
+        <ResponsiveContainer width="100%" height={300}>
+          <AreaChart data={data}>
+            <defs>
+              <linearGradient id="fillForecast" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#0284c7" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#0284c7" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis
+              dataKey="ds"
+              tickFormatter={(value) =>
+                new Date(value).toLocaleDateString("en-US", {
+                  month: "short",
+                  year: "2-digit",
+                })
+              }
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              minTickGap={32}
+            />
+            <YAxis
+              domain={["auto", "auto"]}
+              tickFormatter={(value) =>
+                `₹${value.toLocaleString("en-IN", {
+                  maximumFractionDigits: 0,
+                })}`
+              }
+              tickLine={false}
+              axisLine={false}
+            />
+            <Tooltip
+              formatter={(value: number) =>
+                `₹${value.toLocaleString("en-IN", {
+                  maximumFractionDigits: 2,
+                })}`
+              }
+              labelFormatter={(label: string) =>
+                new Date(label).toLocaleDateString("en-IN", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              }
+            />
+            <Area
+              type="monotone"
+              dataKey="yhat"
+              stroke="#0284c7"
+              strokeWidth={2.5}
+              fill="url(#fillForecast)"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </CardContent>
     </Card>
   )
