@@ -28,11 +28,16 @@ export function SectionCards() {
   React.useEffect(() => {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/predict?index=nasdaq&days=365`)
       .then((res) => res.json())
-      .then((json) => setForecast(json.forecast || []))
+      .then((json) => {
+        console.log("Forecast data:", json)
+        setForecast(Array.isArray(json.forecast) ? json.forecast : [])
+      })
       .catch((err) => console.error("Data fetch error:", err))
   }, [])
 
   React.useEffect(() => {
+    if (!forecast.length) return
+
     const interval = setInterval(() => {
       setAnimating(true)
       setTimeout(() => {
@@ -47,15 +52,15 @@ export function SectionCards() {
   const previous = forecast[index + 1] ?? current
 
   const percentChange =
-    current && previous
+    current && previous && previous.yhat !== 0
       ? (((current.yhat - previous.yhat) / previous.yhat) * 100).toFixed(1)
       : null
   const trendingUp = percentChange && parseFloat(percentChange) > 0
 
-  const values = forecast.map((f) => f.yhat)
-  const std = getStandardDeviation(values)
-  const avg = values.reduce((a, b) => a + b, 0) / values.length
-  const vix = ((std / avg) * 100).toFixed(1)
+  const values = forecast.map((f) => f.yhat).filter(Boolean)
+  const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0
+  const std = values.length ? getStandardDeviation(values) : 0
+  const vix = avg > 0 ? ((std / avg) * 100).toFixed(1) : "0.0"
   const volatilityLabel =
     parseFloat(vix) < 2 ? "Stable" : parseFloat(vix) < 4 ? "Mild fluctuation" : "High fluctuation"
 
@@ -78,7 +83,9 @@ export function SectionCards() {
           </CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
             <span className={animating ? "slide-up-fade-out" : "slide-up-fade-in"}>
-              {current ? `₹${current.yhat.toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "Loading..."}
+              {current?.yhat
+                ? `₹${current.yhat.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
+                : "Loading..."}
             </span>
           </CardTitle>
           <CardAction>
