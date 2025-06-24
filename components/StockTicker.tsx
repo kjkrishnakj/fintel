@@ -18,7 +18,7 @@ export default function StockTicker() {
       try {
         const res = await fetch("/api/stocks")
         const data = await res.json()
-        console.log("Client received:", data)
+        // console.log("Client received:", data)
   
         const validStocks = Array.isArray(data)
           ? data.filter(
