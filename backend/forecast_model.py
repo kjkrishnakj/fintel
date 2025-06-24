@@ -38,7 +38,7 @@ def load_and_forecast(index: str = "nasdaq", days: int = 365):
         return {"error": "Invalid index"}
 
     model = MODEL_CACHE[index]
-
+    
     # Predict future values
     future = model.make_future_dataframe(periods=days)
     forecast = model.predict(future)

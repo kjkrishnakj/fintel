@@ -43,12 +43,12 @@ const rangeToDays: Record<"1y" | "2y" | "5y" | "10y", number> = {
   "1y": 365,
   "2y": 730,
   "5y": 1825,
-  "10y": 30,
+  "10y": 3650,
 }
 
 export function ChartAreaInteractive({ title, index }: Props) {
   const [data, setData] = React.useState<ForecastPoint[]>([])
-  const [range, setRange] = React.useState<"1y" | "2y" | "5y" | "10y">("10y")
+  const [range, setRange] = React.useState<"1y" | "2y" | "5y" | "10y">("1y")
 
   React.useEffect(() => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}/predict?index=${index}&days=${rangeToDays[range]}`
