@@ -29,7 +29,7 @@ export function SectionCards() {
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/predict?index=nasdaq&days=365`)
       .then((res) => res.json())
       .then((json) => {
-        console.log("Forecast data:", json)
+        // console.log("Forecast data:", json)
         setForecast(Array.isArray(json.forecast) ? json.forecast : [])
       })
       .catch((err) => console.error("Data fetch error:", err))

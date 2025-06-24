@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
+import { SiteHeader } from "@/components/site-header"
 import {
   SidebarProvider,
   SidebarInset,
@@ -51,6 +52,8 @@ export default function StockNewsPage() {
     >
       <AppSidebar />
       <SidebarInset>
+        <SiteHeader />
+
         <div className="grid lg:grid-cols-3 gap-8 px-6 py-10 min-h-screen bg-background">
           <div className="lg:col-span-2 space-y-8">
             {featured && (
@@ -76,7 +79,6 @@ export default function StockNewsPage() {
               </a>
             )}
 
-            {/* Latest News */}
             <div>
               <h2 className="text-xl font-semibold m-4">Latest News</h2>
               <div className="grid sm:grid-cols-2 gap-4 auto-rows-fr">
@@ -110,7 +112,6 @@ export default function StockNewsPage() {
             </div>
           </div>
 
-          {/* Must Read Sidebar */}
           <div className="space-y-6">
             <h2 className="text-xl font-semibold mb-2">Must Read</h2>
             <div className="space-y-4">

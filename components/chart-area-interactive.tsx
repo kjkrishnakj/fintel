@@ -54,7 +54,7 @@ export function ChartAreaInteractive({ title, index }: Props) {
   React.useEffect(() => {
     setIsLoading(true)
     const url = `${process.env.NEXT_PUBLIC_API_URL}/predict?index=${index}&days=${rangeToDays[range]}`
-    console.log("Fetching from:", url)
+    // console.log("Fetching from:", url)
 
     fetch(url)
       .then((res) => res.json())
