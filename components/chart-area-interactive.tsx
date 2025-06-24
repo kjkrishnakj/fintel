@@ -43,7 +43,7 @@ const rangeToDays: Record<"1y" | "2y" | "5y" | "10y", number> = {
   "1y": 365,
   "2y": 730,
   "5y": 1825,
-  "10y": 3650,
+  "10y": 30,
 }
 
 export function ChartAreaInteractive({ title, index }: Props) {
