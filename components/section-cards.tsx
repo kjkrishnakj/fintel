@@ -20,29 +20,16 @@ function getStandardDeviation(numbers: number[]) {
 
 export function SectionCards() {
   const [forecast, setForecast] = React.useState<{ ds: string; yhat: number }[]>([])
-  const [previousPrice, setPreviousPrice] = React.useState<number | null>(null)
   const [index, setIndex] = React.useState(0)
   const [animating, setAnimating] = React.useState(false)
 
   const indexLabels = ["NASDAQ", "S&P 500", "Dow Jones", "Russell"]
 
   React.useEffect(() => {
-    fetch("http://localhost:8000/predict?index=nasdaq&days=365")
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/predict?index=nasdaq&days=365`)
       .then((res) => res.json())
-      .then((json) => setForecast(json.forecast))
-      .catch((err) => console.error("Forecast fetch error:", err))
-
-    fetch("/data/nasdaq.csv")
-      .then((res) => res.text())
-      .then((text) => {
-        const rows = text.trim().split("\n")
-        const last = rows[1]?.split(",")
-        if (last) {
-          const close = parseFloat(last[1]?.replace(/[^0-9.]/g, "") || "0")
-          setPreviousPrice(close)
-        }
-      })
-      .catch((err) => console.error("Previous price fetch error:", err))
+      .then((json) => setForecast(json.forecast || []))
+      .catch((err) => console.error("Data fetch error:", err))
   }, [])
 
   React.useEffect(() => {
@@ -53,7 +40,6 @@ export function SectionCards() {
         setAnimating(false)
       }, 600)
     }, 5000)
-
     return () => clearInterval(interval)
   }, [forecast])
 
@@ -64,7 +50,6 @@ export function SectionCards() {
     current && previous
       ? (((current.yhat - previous.yhat) / previous.yhat) * 100).toFixed(1)
       : null
-
   const trendingUp = percentChange && parseFloat(percentChange) > 0
 
   const values = forecast.map((f) => f.yhat)
@@ -74,29 +59,23 @@ export function SectionCards() {
   const volatilityLabel =
     parseFloat(vix) < 2 ? "Stable" : parseFloat(vix) < 4 ? "Mild fluctuation" : "High fluctuation"
 
-  const newsSentiment = React.useMemo(() => {
-    if (forecast.length < 30) return null
-    const past = forecast[29].yhat
-    const now = forecast[0].yhat
-    const change = ((now - past) / past) * 100
-    return {
-      value: change.toFixed(1),
-      label: change > 5 ? "Positive" : change < -5 ? "Negative" : "Neutral",
-      bullish: change > 5,
-    }
-  }, [forecast])
+  const staticSentiment = {
+    value: "+6.8",
+    label: "Positive",
+    bullish: true,
+  }
 
   return (
     <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 xl:grid-cols-4">
       {/* Predicted Price */}
       <Card className="@container/card">
         <CardHeader>
-        <CardDescription>
-  Predicted Price – <span className="font-semibold text-primary dark:text-primary">
-    {indexLabels[index % indexLabels.length]}
-  </span>
-</CardDescription>
-
+          <CardDescription>
+            Predicted Price –{" "}
+            <span className="font-semibold text-primary dark:text-primary">
+              {indexLabels[index % indexLabels.length]}
+            </span>
+          </CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
             <span className={animating ? "slide-up-fade-out" : "slide-up-fade-in"}>
               {current ? `₹${current.yhat.toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "Loading..."}
@@ -128,12 +107,12 @@ export function SectionCards() {
       {/* Volatility Index */}
       <Card className="@container/card">
         <CardHeader>
-        <CardDescription>
-  Volatility Index – <span className="font-semibold text-primary dark:text-primary">
-    {indexLabels[index % indexLabels.length]}
-  </span>
-</CardDescription>
-
+          <CardDescription>
+            Volatility Index –{" "}
+            <span className="font-semibold text-primary dark:text-primary">
+              {indexLabels[index % indexLabels.length]}
+            </span>
+          </CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
             <span className={animating ? "slide-up-fade-out" : "slide-up-fade-in"}>{vix}%</span>
           </CardTitle>
@@ -157,24 +136,24 @@ export function SectionCards() {
         </CardFooter>
       </Card>
 
-      {/* News Sentiment (Static) */}
+      {/* Static News Sentiment */}
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>News Sentiment</CardDescription>
           <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-            {newsSentiment?.label || "Loading..."}
+            {staticSentiment.label}
           </CardTitle>
           <CardAction>
             <Badge variant="outline">
-              {newsSentiment?.bullish ? <IconTrendingUp /> : <IconTrendingDown />}
-              {newsSentiment ? `${newsSentiment.value}%` : ""}
+              {staticSentiment.bullish ? <IconTrendingUp /> : <IconTrendingDown />}
+              {staticSentiment.value}
             </Badge>
           </CardAction>
         </CardHeader>
         <CardFooter className="flex-col items-start gap-1.5 text-sm">
           <div className="flex gap-2 font-medium">
-            {newsSentiment?.bullish ? "Bullish outlook" : "Flat/Weak outlook"}
-            {newsSentiment?.bullish ? (
+            {staticSentiment.bullish ? "Bullish outlook" : "Flat/Weak outlook"}
+            {staticSentiment.bullish ? (
               <IconTrendingUp className="size-4" />
             ) : (
               <IconTrendingDown className="size-4" />
@@ -184,7 +163,7 @@ export function SectionCards() {
         </CardFooter>
       </Card>
 
-      {/* Stocks Monitored (Static) */}
+      {/* Stocks Monitored */}
       <Card className="@container/card">
         <CardHeader>
           <CardDescription>Stocks Monitored</CardDescription>
