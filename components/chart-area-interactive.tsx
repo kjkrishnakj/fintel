@@ -51,21 +51,22 @@ export function ChartAreaInteractive({ title, index }: Props) {
   const [range, setRange] = React.useState<"1y" | "2y" | "5y" | "10y">("10y")
 
   React.useEffect(() => {
-    const days = rangeToDays[range]
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/predict?index=${index}&days=${rangeToDays[range]}`)
-
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/predict?index=${index}&days=${rangeToDays[range]}`
+    console.log("Fetching from:", url)
+  
+    fetch(url)
       .then((res) => res.json())
       .then((json) => {
         if (Array.isArray(json.forecast)) {
           setData(json.forecast)
         } else {
           console.error("Invalid forecast format:", json)
-          setData([]) // optional: clear the chart
+          setData([])
         }
       })
-      
       .catch((err) => console.error("API Error:", err))
   }, [index, range])
+  
 
   return (
     <Card className="@container/card">
