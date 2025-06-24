@@ -24,6 +24,12 @@
 .DS_Store
 *.pem
 
+prophet_env/
+
+venv/
+prophet-env/
+
+
 # debug
 npm-debug.log*
 yarn-debug.log*

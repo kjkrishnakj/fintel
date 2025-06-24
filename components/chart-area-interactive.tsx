@@ -39,21 +39,30 @@ type Props = {
   index: string
 }
 
-const rangeToDays: Record<"1y" | "2y" | "5y", number> = {
+const rangeToDays: Record<"1y" | "2y" | "5y" | "10y", number> = {
   "1y": 365,
   "2y": 730,
   "5y": 1825,
+  "10y": 3650,
 }
 
 export function ChartAreaInteractive({ title, index }: Props) {
   const [data, setData] = React.useState<ForecastPoint[]>([])
-  const [range, setRange] = React.useState<"1y" | "2y" | "5y">("1y")
+  const [range, setRange] = React.useState<"1y" | "2y" | "5y" | "10y">("10y")
 
   React.useEffect(() => {
     const days = rangeToDays[range]
     fetch(`http://localhost:8000/predict?index=${index}&days=${days}`)
       .then((res) => res.json())
-      .then((json) => setData(json.forecast))
+      .then((json) => {
+        if (Array.isArray(json.forecast)) {
+          setData(json.forecast)
+        } else {
+          console.error("Invalid forecast format:", json)
+          setData([]) // optional: clear the chart
+        }
+      })
+      
       .catch((err) => console.error("API Error:", err))
   }, [index, range])
 
@@ -75,6 +84,8 @@ export function ChartAreaInteractive({ title, index }: Props) {
             <ToggleGroupItem value="1y">1 Year</ToggleGroupItem>
             <ToggleGroupItem value="2y">2 Years</ToggleGroupItem>
             <ToggleGroupItem value="5y">5 Years</ToggleGroupItem>
+            <ToggleGroupItem value="10y">10 Years</ToggleGroupItem>
+
           </ToggleGroup>
 
           <Select value={range} onValueChange={(value) => setRange(value as "1y" | "2y" | "5y")}>
@@ -85,6 +96,8 @@ export function ChartAreaInteractive({ title, index }: Props) {
               <SelectItem value="1y">1 Year</SelectItem>
               <SelectItem value="2y">2 Years</SelectItem>
               <SelectItem value="5y">5 Years</SelectItem>
+              <SelectItem value="10y">10 Years</SelectItem>
+
             </SelectContent>
           </Select>
         </div>
