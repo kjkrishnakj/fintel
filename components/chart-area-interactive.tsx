@@ -144,20 +144,39 @@ export function ChartAreaInteractive({ title, index }: Props) {
                 tickLine={false}
                 axisLine={false}
               />
-              <Tooltip
-                formatter={(value: number) =>
-                  `₹${value.toLocaleString("en-IN", {
-                    maximumFractionDigits: 2,
-                  })}`
-                }
-                labelFormatter={(label: string) =>
-                  new Date(label).toLocaleDateString("en-IN", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                }
-              />
+             <Tooltip
+  content={({ active, payload, label }) => {
+    if (active && payload && payload.length > 0 && payload[0].value !== undefined) {
+      return (
+        <div
+          style={{
+            backgroundColor: "#09090b",
+            padding: "8px 12px",
+            borderRadius: "8px",
+            color: "#fff",
+            fontSize: "0.85rem",
+          }}
+        >
+          <div>
+            {new Date(label as string).toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </div>
+          <div>
+            ₹{(payload[0].value as number).toLocaleString("en-IN", {
+              maximumFractionDigits: 2,
+            })}
+          </div>
+        </div>
+      )
+    }
+    return null
+  }}
+/>
+
+
               <Area
                 type="monotone"
                 dataKey="yhat"

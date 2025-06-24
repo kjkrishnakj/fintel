@@ -16,40 +16,40 @@ export default function StockTicker() {
   useEffect(() => {
     const fetchStocks = async () => {
       try {
-        const res = await fetch("/api/stocks")
+        const res = await fetch('/api/stocks?refresh=' + Date.now())
         const data = await res.json()
-        // console.log("Client received:", data)
-  
+
         const validStocks = Array.isArray(data)
           ? data.filter(
               (s: Stock) =>
                 typeof s.price === "number" && typeof s.change === "number"
             )
           : []
-  
+
         setStocks(validStocks)
       } catch (err) {
         console.error("Failed to fetch stock data:", err)
       }
     }
-  
+
     fetchStocks()
     const interval = setInterval(fetchStocks, 30000)
     return () => clearInterval(interval)
   }, [])
-  
 
   useEffect(() => {
+    if (!stocks.length) return
+
     const interval = setInterval(() => {
       setFade("out")
       setTimeout(() => {
-        setIndex((prev) => (stocks.length ? (prev + 1) % stocks.length : 0))
+        setIndex((prev) => (prev + 1) % stocks.length)
         setFade("in")
       }, 400)
     }, 3500)
 
     return () => clearInterval(interval)
-  }, [stocks])
+  }, [stocks.length])
 
   if (!stocks.length) {
     return (
@@ -70,18 +70,14 @@ export default function StockTicker() {
         }`}
       >
         <span className="text-sm font-medium">{stock.symbol}</span>
-        {typeof stock.price === "number" && typeof stock.change === "number" ? (
-          <span
-            className={`ml-3 ${
-              stock.change >= 0 ? "text-green-400" : "text-red-400"
-            }`}
-          >
-            ₹{stock.price.toFixed(2)} ({stock.change >= 0 ? "+" : ""}
-            {stock.change.toFixed(2)}%)
-          </span>
-        ) : (
-          <span className="ml-3 text-yellow-300">Data unavailable</span>
-        )}
+        <span
+          className={`ml-3 ${
+            stock.change! >= 0 ? "text-green-400" : "text-red-400"
+          }`}
+        >
+          ₹{stock.price!.toFixed(2)} ({stock.change! >= 0 ? "+" : ""}
+          {stock.change!.toFixed(2)}%)
+        </span>
       </div>
     </div>
   )
