@@ -49,11 +49,13 @@ const rangeToDays: Record<"1y" | "2y" | "5y" | "10y", number> = {
 export function ChartAreaInteractive({ title, index }: Props) {
   const [data, setData] = React.useState<ForecastPoint[]>([])
   const [range, setRange] = React.useState<"1y" | "2y" | "5y" | "10y">("1y")
+  const [isLoading, setIsLoading] = React.useState<boolean>(true)
 
   React.useEffect(() => {
+    setIsLoading(true)
     const url = `${process.env.NEXT_PUBLIC_API_URL}/predict?index=${index}&days=${rangeToDays[range]}`
     console.log("Fetching from:", url)
-  
+
     fetch(url)
       .then((res) => res.json())
       .then((json) => {
@@ -63,10 +65,13 @@ export function ChartAreaInteractive({ title, index }: Props) {
           console.error("Invalid forecast format:", json)
           setData([])
         }
+        setIsLoading(false)
       })
-      .catch((err) => console.error("API Error:", err))
+      .catch((err) => {
+        console.error("API Error:", err)
+        setIsLoading(false)
+      })
   }, [index, range])
-  
 
   return (
     <Card className="@container/card">
@@ -79,7 +84,7 @@ export function ChartAreaInteractive({ title, index }: Props) {
           <ToggleGroup
             type="single"
             value={range}
-            onValueChange={(value) => setRange(value as "1y" | "2y" | "5y")}
+            onValueChange={(value) => setRange(value as "1y" | "2y" | "5y" | "10y")}
             variant="outline"
             className="hidden sm:flex"
           >
@@ -87,10 +92,9 @@ export function ChartAreaInteractive({ title, index }: Props) {
             <ToggleGroupItem value="2y">2 Years</ToggleGroupItem>
             <ToggleGroupItem value="5y">5 Years</ToggleGroupItem>
             <ToggleGroupItem value="10y">10 Years</ToggleGroupItem>
-
           </ToggleGroup>
 
-          <Select value={range} onValueChange={(value) => setRange(value as "1y" | "2y" | "5y")}>
+          <Select value={range} onValueChange={(value) => setRange(value as "1y" | "2y" | "5y" | "10y")}>
             <SelectTrigger className="w-[150px] sm:hidden">
               <SelectValue placeholder="1 Year" />
             </SelectTrigger>
@@ -99,68 +103,71 @@ export function ChartAreaInteractive({ title, index }: Props) {
               <SelectItem value="2y">2 Years</SelectItem>
               <SelectItem value="5y">5 Years</SelectItem>
               <SelectItem value="10y">10 Years</SelectItem>
-
             </SelectContent>
           </Select>
         </div>
       </CardHeader>
 
       <CardContent className="px-2 pt-2 sm:px-6 sm:pt-4">
-        <ResponsiveContainer width="100%" height={300}>
-          <AreaChart data={data}>
-            <defs>
-              <linearGradient id="fillForecast" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#0284c7" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#0284c7" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis
-              dataKey="ds"
-              tickFormatter={(value) =>
-                new Date(value).toLocaleDateString("en-US", {
-                  month: "short",
-                  year: "2-digit",
-                })
-              }
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              minTickGap={32}
-            />
-            <YAxis
-              domain={["auto", "auto"]}
-              tickFormatter={(value) =>
-                `₹${value.toLocaleString("en-IN", {
-                  maximumFractionDigits: 0,
-                })}`
-              }
-              tickLine={false}
-              axisLine={false}
-            />
-            <Tooltip
-              formatter={(value: number) =>
-                `₹${value.toLocaleString("en-IN", {
-                  maximumFractionDigits: 2,
-                })}`
-              }
-              labelFormatter={(label: string) =>
-                new Date(label).toLocaleDateString("en-IN", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })
-              }
-            />
-            <Area
-              type="monotone"
-              dataKey="yhat"
-              stroke="#0284c7"
-              strokeWidth={2.5}
-              fill="url(#fillForecast)"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {isLoading ? (
+          <div className="text-center text-muted-foreground text-sm">Loading forecast...</div>
+        ) : (
+          <ResponsiveContainer width="100%" height={300}>
+            <AreaChart data={data}>
+              <defs>
+                <linearGradient id="fillForecast" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#0284c7" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#0284c7" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis
+                dataKey="ds"
+                tickFormatter={(value) =>
+                  new Date(value).toLocaleDateString("en-US", {
+                    month: "short",
+                    year: "2-digit",
+                  })
+                }
+                tickLine={false}
+                axisLine={false}
+                tickMargin={8}
+                minTickGap={32}
+              />
+              <YAxis
+                domain={["auto", "auto"]}
+                tickFormatter={(value) =>
+                  `₹${value.toLocaleString("en-IN", {
+                    maximumFractionDigits: 0,
+                  })}`
+                }
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                formatter={(value: number) =>
+                  `₹${value.toLocaleString("en-IN", {
+                    maximumFractionDigits: 2,
+                  })}`
+                }
+                labelFormatter={(label: string) =>
+                  new Date(label).toLocaleDateString("en-IN", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                }
+              />
+              <Area
+                type="monotone"
+                dataKey="yhat"
+                stroke="#0284c7"
+                strokeWidth={2.5}
+                fill="url(#fillForecast)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </CardContent>
     </Card>
   )
