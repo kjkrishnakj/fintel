@@ -52,7 +52,7 @@ export function ChartAreaInteractive({ title, index }: Props) {
 
   React.useEffect(() => {
     const days = rangeToDays[range]
-    fetch(`fetch("https://fintel-backend.onrender.com/predict?index=dow&days=3650")`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/predict?index=${index}&days=${rangeToDays[range]}`)
 
       .then((res) => res.json())
       .then((json) => {
