@@ -44,5 +44,5 @@ Fintel is a modern web application that provides users with insightful financial
 
 ---
 
-## 📁 Project Structure
+
 
